@@ -43,26 +43,32 @@ define postfix::config (
     fail 'You must define class postfix before using postfix::config!'
   }
 
+  $postconf_cmd = '/usr/sbin/postconf'
+
   case $ensure {
     'present': {
-      $changes = "set ${name} '${value}'"
+      $cmd = "-e ${name}=${value}"
+      $test_value = "'${value}'"
     }
     'absent': {
-      $changes = "rm ${name}"
+      $cmd = "-# ${name}"
+      $test_value = "$(${postconf_cmd} -dh ${name})"
     }
     'blank': {
-      $changes = "clear ${name}"
+      $cmd = "-e ${name}=''"
+      $test_value = "''"
     }
     default: {
       fail "Unknown value for ensure '${ensure}'"
     }
   }
 
-  augeas { "manage postfix '${title}'":
-    incl    => "${postfix::confdir}/main.cf",
-    lens    => 'Postfix_Main.lns',
-    changes => $changes,
-    require => File["${postfix::confdir}/main.cf"],
+  exec { "manage postfix '${title}'":
+    notify  => Service['postfix'],
+    command => "${postconf_cmd} ${cmd}",
+    onlyif  => "/usr/bin/test $(${postconf_cmd} -h ${name} 2>/dev/null) != ${test_value}",
+    cwd     => '/',
+    timeout => 30,
   }
 
   Postfix::Config[$title] ~> Class['postfix::service']
