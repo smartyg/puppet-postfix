@@ -66,7 +66,7 @@ define postfix::config (
   exec { "manage postfix '${title}'":
     notify  => Service['postfix'],
     command => "${postconf_cmd} ${cmd}",
-    onlyif  => "/usr/bin/test $(${postconf_cmd} -h ${name} 2>/dev/null) != ${test_value}",
+    onlyif  => "/usr/bin/test \"$(${postconf_cmd} -h ${name} 2>/dev/null)\" != \"${test_value}\"",
     cwd     => '/',
     timeout => 30,
   }
