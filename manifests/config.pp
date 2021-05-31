@@ -47,12 +47,12 @@ define postfix::config (
 
   case $ensure {
     'present': {
-      $cmd = "-e ${name}=${value}"
+      $cmd = "-e '${name}=${value}'"
       $test_value = "'${value}'"
     }
     'absent': {
-      $cmd = "-# ${name}"
-      $test_value = "$(${postconf_cmd} -dh ${name})"
+      $cmd = "-# '${name}'"
+      $test_value = "\"$(${postconf_cmd} -dh '${name}')\""
     }
     'blank': {
       $cmd = "-e ${name}=''"
@@ -66,7 +66,7 @@ define postfix::config (
   exec { "manage postfix '${title}'":
     notify  => Service['postfix'],
     command => "${postconf_cmd} ${cmd}",
-    onlyif  => "/usr/bin/test \"$(${postconf_cmd} -h ${name} 2>/dev/null)\" != \"${test_value}\"",
+    onlyif  => "/usr/bin/test \"$(${postconf_cmd} -h ${name} 2>/dev/null)\" != ${test_value}",
     cwd     => '/',
     timeout => 30,
   }
