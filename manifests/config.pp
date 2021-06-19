@@ -30,6 +30,7 @@
 define postfix::config (
   Optional[String]                   $value  = undef,
   Enum['present', 'absent', 'blank'] $ensure = 'present',
+  Boolean                            $force  = false,
 ) {
   include postfix
 
@@ -62,11 +63,17 @@ define postfix::config (
       fail "Unknown value for ensure '${ensure}'"
     }
   }
+  
+  if $force {
+    $extra_test = "-z \"$(${postconf_cmd} -nH 2>/dev/null | grep ${name})\" -o "
+  } else {
+    $extra_test = ''
+  }
 
   exec { "manage postfix '${title}'":
     notify  => Service['postfix'],
     command => "${postconf_cmd} ${cmd}",
-    onlyif  => "/usr/bin/test \"$(${postconf_cmd} -h ${name} 2>/dev/null)\" != ${test_value}",
+    onlyif  => "/usr/bin/test ${extra_test} \"$(${postconf_cmd} -h ${name} 2>/dev/null)\" != ${test_value}",
     cwd     => '/',
     timeout => 30,
   }
